@@ -68,10 +68,15 @@
     };
 
     var template_function = function(text, config){
-        var emotes = [':', '::', '/me'];
+        var emotes = ['::', ':', '/me'];
         var emote = false;
-        for (var s in emotes){
-            emote = emote || (text.lastIndexOf(s, 0) === 0);
+        for (var i = 0; i < emotes.length; i++){
+            var s = emotes[i];
+            if (text.lastIndexOf(s, 0) === 0){
+                text = text.substring(s.length);
+                emote =true;
+                break;
+            }
         }
         return emote ? text : config.template.replace("{text}",text);
     };
@@ -145,7 +150,7 @@ $.fn.weaverchat = function(settings){
         $("<label>").addClass("chat-prompt").text(config.prompt).prop('for',input.prop('id')).appendTo(form);
         input.appendTo(form);
         input.prop('maxlength', config.max_chars)
-        var submit = $("<input type='submit'/>").val("Add").appendTo(form);
+        var submit = $("<input type='button'/>").val("Add").appendTo(form);
         var charcounter = $("<span>").addClass("charcounter").appendTo(form);
         
         var preview = $("<div class='chat-preview'/>").appendTo(form);
@@ -165,14 +170,17 @@ $.fn.weaverchat = function(settings){
                 profile_id: config.profile_id,
                 room_id: config.room_id,
                 profile_display_name: config.profile_display_name,
-                message: template_function(input.val(),config),
+                message: config.template_function(input.val(),config),
             }
         };
 
-        var send = function(){
-            socket.emit('msg', JSON.stringify(getmsg()));
-            appendMsg(getmsg());
-            input.val("");   
+        var send = function(event){
+            event.preventDefault();
+            if (input.val().length > 0){
+                socket.emit('msg', JSON.stringify(getmsg()));
+                appendMsg(getmsg());
+                input.val("");   
+            }
         };
         form.on('submit', send);
         submit.on('click', send)
