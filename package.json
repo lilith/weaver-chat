@@ -19,6 +19,7 @@
   "dependencies": {
     "socket.io": "~0.9.16",
     "express": "~3.4.7",
-    "ejs": "~0.8.5"
+    "ejs": "~0.8.5",
+    "redis": "~0.10.0"
   }
 }
