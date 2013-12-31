@@ -18,6 +18,7 @@ if (process.env.REDISTOGO_URL) {
 return client;
 }
 
+
 app.configure(function() {
     app.locals.pretty = true;
     app.use(express.compress());
