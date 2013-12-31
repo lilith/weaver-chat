@@ -17,7 +17,10 @@ body{
   padding:0;
   margin:0;
 }
-
+.weaverchat .chat-messages a{
+  text-decoration: none;
+  color:inherit;
+}
 .weaverchat input{
   border:solid 1px #393939;
   background-color:#171517;
@@ -31,3 +34,21 @@ body{
 .weaverchat .chat-form{
   margin-top:20px;
 }
+
+.colDkBlue{color:#8080FF;}
+.colDkGreen{color:#00B000;}
+.colDkCyan{color:#00B0B0;}
+.colDkRed{color:#BB0000;}
+.colDkMagenta{color:#9117EE;}
+.colDkYellow{color:#FCO;}
+.colDkWhite{color:#EBEBEB;}
+.colLtBlue{color:#6262FF;}
+.colLtGreen{color:#0C3;}
+.colLtCyan{color:#00FFFF;}
+.colLtRed{color:#F00;}
+.colLtMagenta{color:#F09;}
+.colLtYellow{color:#FF0;}
+.colLtWhite{color:#FFF;}
+.colLtBlack{color:#777;}
+.colDkOrange{color:#950;}
+.colLtOrange{color:#F90;}

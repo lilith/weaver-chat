@@ -3,8 +3,68 @@
 
 (function($){
 
+    var colors = {  '0': '',
+                    '1': 'colDkBlue',
+                    '2': 'colDkGreen',
+                    '3': 'colDkCyan',
+                    '4': 'colDkRed',
+                    '5': 'colDkMagenta',
+                    '6': 'colDkYellow',
+                    '7': 'colDkWhite',
+                    'q': 'colDkOrange',
+                    '!': 'colLtBlue',
+                    '@': 'colLtGreen',
+                    '#': 'colLtCyan',
+                    '$': 'colLtRed',
+                    '%': 'colLtMagenta',
+                    '^': 'colLtYellow',
+                    '&': 'colLtWhite',
+                    'Q': 'colLtOrange',
+                    ')': 'colLtBlack',
+                    'r': 'colRose',
+                    'R': 'colRose',
+                    'v': 'coliceviolet',
+                    'V': 'colBlueViolet',
+                    'g': 'colXLtGreen',
+                    'G': 'colXLtGreen',
+                    'T': 'colDkBrown',
+                    't': 'colLtBrown',
+                    '~': 'colBlack',
+                    'j': 'colMdGrey',
+                    'J': 'colMdBlue',
+                    'e': 'colDkRust',
+                    'E': 'colLtRust',
+                    'l': 'colDkLinkBlue',
+                    'L': 'colLtLinkBlue',
+                    'x': 'colburlywood',
+                    'X': 'colbeige',
+                    'y': 'colkhaki',
+                    'Y': 'coldarkkhaki',
+                    'k': 'colaquamarine',
+                    'K': 'coldarkseagreen',
+                    'p': 'collightsalmon',
+                    'P': 'colsalmon',
+                    'm': 'colwheat',
+                    'M': 'coltan'};
+
+
     var colorize = function(text){
-        return text;
+        var parts = text.split('`');
+        var result = $("<span/>");
+        for (var i = 0; i < parts.length; i++){
+            var p = parts[i]
+            var color = (i > 0 && p.length > 0) ? colors[p[0]] : null;
+            if (!color && i > 0){
+                result.append(document.createTextNode('`'));
+            }
+            if (color){
+                result.append($("<span/>").addClass(color).text(p.substring(1)));
+            }else{
+                result.append(document.createTextNode(p));
+            }
+
+        }
+        return result;
     };
 
     var template_function = function(text, config){
@@ -18,12 +78,12 @@
 
     var message_to_html = function(message, config){
         return $("<span>").append(
-            $("<a class='handle' href='#'/>").text(
+            $("<a class='handle' href='#'/>").append(
                 config.colorize_function(message.profile_display_name)))
            .append(
             document.createTextNode(' '))
            .append(
-            $("<span class='message'/>").text(
+            $("<span class='message'/>").append(
                 config.colorize_function(message.message))
             );
 
@@ -35,12 +95,12 @@
             return v.toString(16);
         });
     };
-    
+
     var defaults = {
         user_id: 'guidguid',
         profile_id: 'guidguid',
         profile_display_name: "Wizard Bob",
-        template : 'says "{text}"',
+        template : '`3says "`#{text}`3"',
         colorize_function: colorize,
         template_function: template_function,
         message_to_html: message_to_html,
