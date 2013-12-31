@@ -1,31 +1,122 @@
-var socket = io.connect('http://' + window.location.hostname);
 
-socket.on('msg', function(data) {
-    var msg = JSON.parse(data);
-    appendMsg(msg);
-});
 
-socket.on('init', function(data) {
-    var messages = JSON.parse(data)
-    for (i in messages)
-        appendMsg(messages[i])
-});
 
-function appendMsg(msg) {
-    $('#msgs').append(function() {
-        var div = $('<div>');
-        div.html('<b>' + msg.username + ':</b> ' + msg.message);
-        return div;
+(function($){
+
+    var colorize = function(text){
+        return text;
+    };
+
+    var template_function = function(text, config){
+        var emotes = [':', '::', '/me'];
+        var emote = false;
+        for (var s in emotes){
+            emote = emote || (text.lastIndexOf(s, 0) === 0);
+        }
+        return emote ? text : config.template.replace("{text}",text);
+    };
+
+    var message_to_html = function(message, config){
+        return $("<span>").append(
+            $("<a class='handle' href='#'/>").text(
+                config.colorize_function(message.profile_display_name)))
+           .append(
+            document.createTextNode(' '))
+           .append(
+            $("<span class='message'/>").text(
+                config.colorize_function(message.message))
+            );
+
+    };
+
+    var uuid = function(){
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+            return v.toString(16);
+        });
+    };
+    
+    var defaults = {
+        user_id: 'guidguid',
+        profile_id: 'guidguid',
+        profile_display_name: "Wizard Bob",
+        template : 'says "{text}"',
+        colorize_function: colorize,
+        template_function: template_function,
+        message_to_html: message_to_html,
+        room_id: 'default_room',
+        chat_server: 'http://' + window.location.hostname,
+        header: "Nearby some of your comrades converse:",
+        prompt: "Speak",
+        // room_auth_token: 'authentication token',
+        max_chars: 200
+    };
+
+$.fn.weaverchat = function(settings){
+    var config = $.extend({}, defaults);
+    if (settings) {$.extend(config, settings);}
+
+    return this.each(function() {
+        var socket = io.connect(config.chat_server);
+
+        var c = $(this);
+        c.addClass("weaverchat");
+        $("<h3>").addClass("chat-header").text(config.header).appendTo(c);
+        var list = $("<ul>").addClass("chat-messages").appendTo(c);
+
+        var appendMsg = function(msg){
+            var line = $("<li>").append(config.message_to_html(msg,config)).appendTo(list);
+        }
+
+        socket.on('msg', function(data) {
+            var msg = JSON.parse(data);
+            appendMsg(msg);
+        });
+
+        socket.on('init', function(data) {
+            var messages = JSON.parse(data)
+            for (i in messages)
+                appendMsg(messages[i])
+        });
+
+        //Build input form
+        var form = $("<form>").addClass('chat-form').prop('id',uuid()).appendTo(c);
+        var input = $("<input type='text' class='chat-input' />").prop('id',uuid())
+        $("<label>").addClass("chat-prompt").text(config.prompt).prop('for',input.prop('id')).appendTo(form);
+        input.appendTo(form);
+        input.prop('maxlength', config.max_chars)
+        var submit = $("<input type='submit'/>").val("Add").appendTo(form);
+        var charcounter = $("<span>").addClass("charcounter").appendTo(form);
+        
+        var preview = $("<div class='chat-preview'/>").appendTo(form);
+
+        input.on('keyup', function(){
+            text = input.val();
+            charcounter.text(config.max_chars - text.length);
+
+            preview.empty();
+            preview.append(config.message_to_html(getmsg(),config));
+
+        });
+            
+        var getmsg = function(){
+            return {
+                user_id: config.user_id,
+                profile_id: config.profile_id,
+                room_id: config.room_id,
+                profile_display_name: config.profile_display_name,
+                message: template_function(input.val(),config),
+            }
+        };
+
+        var send = function(){
+            socket.emit('msg', JSON.stringify(getmsg()));
+            appendMsg(getmsg());
+            input.val("");   
+        };
+        form.on('submit', send);
+        submit.on('click', send)
     });
-    $('#msgs')[0].scrollTop = $('#msgs')[0].scrollHeight;
-}
+ };
+})(jQuery);
 
-function sendMsg() {
-    var msg = {};
-    $.each($('#chat').serializeArray(), function(i,v) {
-        msg[v.name] = v.value;
-    });
-    $("#msg").val("");
-    appendMsg(msg);
-    socket.emit('msg', JSON.stringify(msg));
-}

@@ -2,21 +2,24 @@
   <head>
     <link rel="stylesheet" type="text/css" href="/components/normalize-css/normalize.css"/>
     <link rel="stylesheet" type="text/css" href="/styles.css"/>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/components/jquery/jquery.min.js"></script>
-    <script src="/weaverchat.js"></script>
+
 </head>
 <body>
     <div>
-        <p class="chat-title" onclick="javascript: toggleChat();">Real Time Chat</p>
-        <div id="msgs"></div>
-        <div id="form">
-            <form id="chat" onsubmit="sendMsg(); return false;">
-                <label for="username">Username: </label><input name="username" type="text"><br/>
-                <label for="msg"> Message: </label><input id="msg" type="text" name="message"/><br/>
-                <input type="submit"/>
-            </form>
-        </div>
+        <h1>Weaver-chat prototype</h1>
+        <p>RPG chat system
+        
+        <div class="weaverchat" />
+
+
     </div>
+        <script src="/socket.io/socket.io.js"></script>
+    <script src="/components/jquery/jquery.min.js"></script>
+    <script src="/weaverchat.js"></script>
+    <script type="text/javascript">
+    $(function(){
+        $(".weaverchat").weaverchat();
+    });
+    </script>
 </body>
 </html>

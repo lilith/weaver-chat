@@ -1,15 +1,33 @@
-#msgs {
-  height: 300px;
-  background: #f3f3ff;
-  font-family: monospace, sans; 
-  overflow:auto;
+body{
+  background-color:#171517;color:#CCC;
 }
 
-.chat-title {
-  color: white;
-  background: #a2a2ee;
-  font-weight: bold;
-  font-size: 20px;
-  height: 24px;
-  padding: 2px;
+.weaverchat {
+  color:white;
+  padding:1em;
+  font: 12px verdana;
+}
+.weaverchat h3{
+  font: 12px verdana;
+  padding:0;
+  margin:0;
+}
+.weaverchat .chat-messages, .weaverchat .chat-messages li{
+  list-style-type:none;
+  padding:0;
+  margin:0;
+}
+
+.weaverchat input{
+  border:solid 1px #393939;
+  background-color:#171517;
+  color:#CCC;
+}
+
+.weaverchat label{
+  display:block;
+}
+
+.weaverchat .chat-form{
+  margin-top:20px;
 }
