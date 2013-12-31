@@ -64,4 +64,4 @@ io.sockets.on('connection', function(client) {
     })
 })
 
-server.listen(80)
+server.listen(process.env.PORT || 80)
