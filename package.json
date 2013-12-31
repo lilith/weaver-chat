@@ -1,0 +1,22 @@
+{
+  "name": "weaver-chat",
+  "version": "0.0.0",
+  "description": "Node.js/redis",
+  "main": "chat.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nathanaeljones/weaver-chat.git"
+  },
+  "author": "",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/nathanaeljones/weaver-chat/issues"
+  },
+  "homepage": "https://github.com/nathanaeljones/weaver-chat",
+  "dependencies": {
+    "socket.io": "~0.9.16"
+  }
+}
