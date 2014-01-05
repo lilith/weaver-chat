@@ -54,6 +54,7 @@ Set Ignore (ignore,[user_id], [profile_id], [room_id],[target_user_id], [target_
 
 ### Milestone 0.4
 
+* Add reconnect, message ordering, and message guid support (messages can be out-of-order and duplicated)
 * Add multi-room support
 
 ### Milestone 0.5
