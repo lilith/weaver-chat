@@ -28,6 +28,7 @@ message shall be a string containing valid JSON
 hmacsha256 shall be the base64 encoding of the HMAC SHA256 hash digest of "secret|message"
 message MUST always contain a 'signed_on' field, with an ISO 8601 datetime of the message's creation. This serves as both a salt and an expiry hint, and cannot be ommited.
 
+```
 POST
 {
 	action: 'setmute',
@@ -78,11 +79,12 @@ powers:
 { room_id: string, authority_level: 0...3,},
 ]
 }
-
+```
 Shared secrets are used to sign API requests in both directions.
 
 In addition to the above API, the chat server only allows a client to connect to a room if the jquery plugin is provided a similar JSON string and hash:
 
+```
 {
 room_id,
 user_id,
@@ -92,7 +94,7 @@ signed_on,
 readonly: true|false,
 user_authority_level: number
 }
-
+```
 
 ## Are there any potential use cases for
 
