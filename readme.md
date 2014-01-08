@@ -21,8 +21,10 @@ Sync protocol.
 
 Both chat server and host game should expose the following API (URL is configurable)
 
+```
 /weaverchat/rpc - GET/POST
 Params: hmacsha256, message
+```
 
 message shall be a string containing valid JSON
 hmacsha256 shall be the base64 encoding of the HMAC SHA256 hash digest of "secret|message"
