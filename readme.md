@@ -103,22 +103,22 @@ powers: {}
 
 ## Are there any potential use cases for
 
-* ...  only muting a user in a given room?
-* ...  only allowing a low-level moderator to mute a user within his/her room or room group or game?
-* ...  only muting one of a user's profiles?
-* ...  only ignoring a user's chats within a single room?
-* ...  only ignoring a profile's chats (vs the user)?
-* ...  Having expiring ignores?
-* ...  only ignoring a user from within one of your own profiles, but not another?
-* ...  Preventing moderators from being ignored by normal users?
-* ...  Preventing moderators from muting moderators of the same/higher level?
-* ...  Having moderators powers specific to a given room (or room group or game?)
-* ...  Having multiple tiers of moderators? 
-* ...  Allowing 'other' users' message deletion by moderators?
+* ...  only muting a user in a given room? - guess: probably, for moderators that only have power in specific rooms
+* ...  only allowing a low-level moderator to mute a user within his/her room or room group or game? - probably
+* ...  only muting one of a user's profiles? - probably not
+* ...  only ignoring a user's chats within a single room? - probably not
+* ...  only ignoring a profile's chats (vs the user)? - probably not
+* ...  Having expiring ignores? - probably not
+* ...  only ignoring a user from within one of your own profiles, but not another? - probably not
+* ...  Preventing moderators from being ignored by normal users? - probably so
+* ...  Preventing moderators from muting moderators of the same/higher level? - probably so
+* ...  Having moderators powers specific to a given room (or room group or game?) - probably so
+* ...  Having multiple tiers of moderators? - probably
+* ...  Allowing 'other' users' message deletion by moderators? - for spam control, yes
 
 ## Can we simplify by
 
-* ... Doing ignoring on the client side, saving the list to the game server instead of the chat server? This means the HTML hosting the chat page will have to contain the list of ignored users every time, but much less server complexity. How long does this list max out at normally?
+* ... Doing ignoring on the client side, saving the list to the game server instead of the chat server? This means the HTML hosting the chat page will have to contain the list of ignored users every time, but much less server complexity. How long does this list max out at normally? - going for it. Simplifies everything, gives host more control over ignore rules.
 
 ## Roadmap
 
