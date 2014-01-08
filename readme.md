@@ -11,27 +11,102 @@ Tech stack: Node.js + socket.io + redis
 * Interpret color codes & newlines client-side (no HTML permitted in the db)  
 * User handles are clickable, and allow 'view profile', 'chat', 'mail', 'ignore', 'mute' links.
 * Muting happens until a given date, and can only be performed by moderators. All users can ignore other users.
-
 * Multi-room
 * Room access control (externally handled)
-* Externally handled authorization. Per-session keys are provided and verified. 
+* Externally handled authorization. Expiring per-action or per-session signatures are provided and verified. 
 
 ## APIs
 
-Shared secrets are used to sign API requests.
+Sync protocol. 
 
-Display room  (room id, user id, profile id, display_name, token_created_date, readonly)
-Set Mute (mute,[user_id], [profile_id], [room_id], token_created_date)
-Set Ignore (ignore,[user_id], [profile_id], [room_id],[target_user_id], [target_profile_id], token_created_date)
+Both chat server and host game should expose the following API (URL is configurable)
 
-Callbacks are APIs the host app must implement.
+/weaverchat/rpc - GET/POST
+Params: hmacsha256, message
 
-Get user info (returns list of ignored users, and the mute state for the user)
+message shall be a string containing valid JSON
+hmacsha256 shall be the base64 encoding of the HMAC SHA256 hash digest of "secret|message"
+message MUST always contain a 'signed_on' field, with an ISO 8601 datetime of the message's creation. This serves as both a salt and an expiry hint, and cannot be ommited.
 
-Set Mute (mute,[user_id], [profile_id], [room_id], token_created_date)
-Set Ignore (ignore,[user_id], [profile_id], [room_id],[target_user_id], [target_profile_id], token_created_date)
+POST
+{
+	action: 'setmute',
+	mute_until: [date] | nil,
+	profile_id: nil | string,
+	user_id:  nil | string,
+	room_id: nil | string,
+	signed_on: "1997-07-16T19:20:30.45+01:00"
+}
+RESPONSE -> 200 OK, 500 ERROR, 403 invalid signature
+
+POST
+{
+	action: 'setignore',
+	ignore: true | false,
+	profile_id: nil | string,
+	user_id:  nil | string,
+	room_id: nil | string,
+	target_user_id: nil | string,
+	target_profile_id: nil | string,
+	signed_on: "1997-07-16T19:20:30.45+01:00"
+}
+RESPONSE -> 200 OK, 500 ERROR, 403 invalid signature
+
+GET
+{
+	action: 'getchatinfo',
+	user_id: string,
+	signed_on: "1997-07-16T19:20:30.45+01:00"
+}
+
+RESPONSE -> 200 OK, 403 invalid signature
+
+{
+user_id:string,
+mutes: 
+[ 
+{(profile_id), (room_id), expiry_date},
+{(profile_id), (room_id), expiry_date}
+],
+ignores:
+[
+{(target_user_id), (target_profile_id), (room_id), expiry_date},
+{(target_user_id), (target_profile_id), (room_id), expiry_date}
+],
+powers: 
+[
+{ room_id: string, authority_level: 0...3,},
+]
+}
+
+Shared secrets are used to sign API requests in both directions.
+
+In addition to the above API, the chat server only allows a client to connect to a room if the jquery plugin is provided a similar JSON string and hash:
+
+{
+room_id,
+user_id,
+profile_id,
+display_name,
+signed_on,
+readonly: true|false,
+user_authority_level: number
+}
 
 
+## Are there any potential use cases for
+
+* ...  only muting a user in a given room?
+* ...  only allowing a low-level moderator to mute a user within his/her room?
+* ...  only muting one of a user's profiles?
+* ...  only ignoring a user's chats within a single room?
+* ...  only ignoring a profile's chats (vs the user)?
+* ...  Having expiring ignores?
+* ...  only ignoring a user from within one of your own profiles?
+* ...  Preventing moderators from being ignored by normal users?
+* ...  Preventing moderators from muting moderators of the same/higher level?
+* ...  Having moderators powers specific to a given room (or room group?)
+* ...  Having multiple tiers of moderators? 
 
 
 ## Roadmap
@@ -54,6 +129,7 @@ Set Ignore (ignore,[user_id], [profile_id], [room_id],[target_user_id], [target_
 
 ### Milestone 0.4
 
+* Add reconnect, message ordering, and message guid support (messages can be out-of-order and duplicated)
 * Add multi-room support
 
 ### Milestone 0.5
