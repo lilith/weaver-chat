@@ -114,7 +114,7 @@ powers: {}
 * ...  Preventing moderators from muting moderators of the same/higher level?
 * ...  Having moderators powers specific to a given room (or room group or game?)
 * ...  Having multiple tiers of moderators? 
-* ...  Allowing message deletion?
+* ...  Allowing 'other' users' message deletion by moderators?
 
 ## Can we simplify by
 
