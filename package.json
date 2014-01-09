@@ -22,7 +22,8 @@
     "ejs": "~0.8.5",
     "redis": "~0.10.0",
     "underscore": "~1.5.2",
-    "node-uuid": "~1.4.1"
+    "node-uuid": "~1.4.1",
+    "grunt": "~0.4.2"
   },
   "engines": {
     "node": "0.10.x"
