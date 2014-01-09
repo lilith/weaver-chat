@@ -4,16 +4,20 @@ Tech stack: Node.js + socket.io + redis
 
 ## Requirements
 
-* Fully embeddable
+* Fully embeddable - host handles as much as possible.
 * Chat persistence and history browsing
 * Configurable talklines and emotes (overrides)
-* Messages include (user uuid, user display name, message, timestamp)
+* Outgoing messages include (user_id, profile_id, user display_name, message, send_timestamp, send_id)
+* Incoming messages include (user_id, profile_id, display_name, message, id, date)
 * Interpret color codes & newlines client-side (no HTML permitted in the db)  
 * User handles are clickable, and allow 'view profile', 'chat', 'mail', 'ignore', 'mute' links.
 * Muting happens until a given date, and can only be performed by moderators. All users can ignore other users.
 * Multi-room, room hierarchy
 * Room access control (externally handled)
 * Externally handled authorization. Expiring per-action or per-session signatures are provided and verified. 
+* Client-side ignore handling - jQuery plugin gets an array of 'user_id' strings to ignore.
+* Message redaction by moderators
+* Dupe, blank, foul language, and overload (> 10 in a row) detection.
 
 ## APIs
 
@@ -43,20 +47,6 @@ POST
 }
 RESPONSE -> 200 OK, 500 ERROR, 403 invalid signature
 
-POST
-{
-	action: 'setignore',
-	ignore: true | false,
-	profile_id: nil | string,
-	user_id:  nil | string,
-	room_prefix: string,
-	room_id: nil | string,
-	target_user_id: nil | string,
-	target_profile_id: nil | string,
-	signed_on: "1997-07-16T19:20:30.45+01:00"
-}
-RESPONSE -> 200 OK, 500 ERROR, 403 invalid signature
-
 GET
 {
 	action: 'getchatinfo',
@@ -71,17 +61,12 @@ RESPONSE -> 200 OK, 403 invalid signature
 user_id:string,
 mutes: 
 [ 
-{(profile_id), (room_id), (room_prefix), expiry_date},
-{(profile_id), (room_id), (room_prefix), expiry_date}
-],
-ignores:
-[
-{(target_user_id), (target_profile_id), (room_prefix), (room_id), expiry_date},
-{(target_user_id), (target_profile_id), (room_prefix), (room_id), expiry_date}
+{(profile_id), (room_id), (room_prefix), reason: String, expiry_date},
+{(profile_id), (room_id), (room_prefix), reason: String, expiry_date}
 ],
 powers: 
 [
-{ room_id: string, room_prefix: string, authority_level: 0...3,},
+{ room_id: string, room_prefix: string, can_mute: true},
 ]
 }
 ```
@@ -97,7 +82,8 @@ profile_id,
 display_name,
 signed_on,
 readonly: true|false,
-powers: {} 
+powers: {},
+mutes: [], 
 }
 ```
 
@@ -158,4 +144,26 @@ powers: {}
 ### Milestone 0.7
 
 * Add outbox and message failure handling/retry
+
+
+### Specs
+
+
+* Client-side ignore function. jQuery plugin is provided a list of user_id's to ignore in this room.
+* Server-side mute, blank, duplicate, spam (> 10 in a row) and foul languge detection
+* Sent messages have a send_guid and a send_date. The server adds the guid and date. 
+* Until the response returns (confirm, deny, connection error), the message stays in the client outbox. 
+* A message can also be deleted by another mod, which moves it to the log (below the preview), not the outbox.
+
+
+Server-side mute
+
+action: 'setmute',
+	mute_until: [date] | nil,
+	reason: string,
+	room_prefix: string,
+	user_id:  nil | string,
+	room_id: nil | string,
+	signed_on: "1997-07-16T19:20:30.45+01:00"
+
 

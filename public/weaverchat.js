@@ -101,6 +101,7 @@
         });
     };
 
+
     var defaults = {
         user_id: 'guidguid',
         profile_id: 'guidguid',
@@ -114,36 +115,33 @@
         header: "Nearby some of your comrades converse:",
         prompt: "Speak",
         // room_auth_token: 'authentication token',
-        max_chars: 200
+        max_chars: 200,
+        ignore_users: [ ],
+        authstring: null,
+        hmacsha256
     };
 
 $.fn.weaverchat = function(settings){
     var config = $.extend({}, defaults);
     if (settings) {$.extend(config, settings);}
 
+
+    var outbox = [];
+    var inbox = [];
+    var log = [];
+
     return this.each(function() {
         var socket = io.connect(config.chat_server);
 
+
+        //Build UI
         var c = $(this);
         c.addClass("weaverchat");
         $("<h3>").addClass("chat-header").text(config.header).appendTo(c);
-        var list = $("<ul>").addClass("chat-messages").appendTo(c);
+        var scrollWindow = $("<div>").addClass("chat-scroll").appendTo(c);
+        var list = $("<ul>").addClass("chat-messages").appendTo(scrollWindow);
 
-        var appendMsg = function(msg){
-            var line = $("<li>").append(config.message_to_html(msg,config)).appendTo(list);
-        }
-
-        socket.on('msg', function(data) {
-            var msg = JSON.parse(data);
-            appendMsg(msg);
-        });
-
-        socket.on('init', function(data) {
-            var messages = JSON.parse(data)
-            for (i in messages)
-                appendMsg(messages[i])
-        });
-
+        var outboxList = $("<ul>").addClass("chat-outbox").appendTo(scrollWindow);
         //Build input form
         var form = $("<form>").addClass('chat-form').prop('id',uuid()).appendTo(c);
         var input = $("<input type='text' class='chat-input' />").prop('id',uuid())
@@ -154,16 +152,115 @@ $.fn.weaverchat = function(settings){
         var charcounter = $("<span>").addClass("charcounter").appendTo(form);
         
         var preview = $("<div class='chat-preview'/>").appendTo(form);
+        var errorLog = $("<ul>").addClass("chat-errors").appendTo(c);
+
 
         input.on('keyup', function(){
             text = input.val();
             charcounter.text(config.max_chars - text.length);
-
             preview.empty();
             preview.append(config.message_to_html(getmsg(),config));
 
         });
             
+
+
+        var appendMsg = function(msg){
+            //Parse date, prevent html injection
+            _.each(msg, function(e){ e.date = Date.parse(e.date); delete e.html;};
+
+            //Sort by date
+            inbox = inbox.concat(msg);
+            inbox.sort(function(a,b){
+                return a.date - b.date;
+            });
+            //Uniq by id
+            inbox = _.uniq(inbox, true, function(e){ return e.id });
+
+            //Truncate to last 100 messages
+            inbox = inbox.slice(-100); 
+
+            //Cache the dom nodes that aren't already populated
+            _.each(inbox, function(e){
+                if (!e.html) {
+                    e.html = $("<li>").append(config.message_to_html(msg,config);
+                }
+            });
+
+            //Display the filtered inbox
+            var filteredInbox = _.reject(inbox, function(e){
+                _.contains(config.ignore_users, e.user_id);
+            });
+
+            list.empty();
+            _.each(filteredInbox, function(e){
+                list.append(e);
+            });
+
+        };
+
+        var log = function (message){
+            errorLog.append($("<li>").text(message));
+        };
+        var deleteMsg = function (ids){
+            ids = function(e){ return _.contains(ids,e.id);}
+            var deleted = _.filter(inbox,ids);
+            inbox = _.reject(inbox, ids);
+            appendMsg([]);
+            var mine = _.filter(deleted, function(e){
+                return e.user_id == config.user_id;
+            });
+            if (mine.length > 0){
+                _.each(mine, function(e){
+                    log("Your message was deleted: " + e.message);
+                });
+            }
+        };
+
+        var updateOutboxUi = function(){
+            outboxList.empty();
+            var sending = "<span class='sending'>sending</span>";
+            _.each(outbox, function(e){
+                outboxList.append($("<li>").append(config.message_to_html(e,config)).append($(sending)));
+            });
+        };
+
+        var removeFromOutbox = function(send_id){
+            send_id = function(e){ return e.send_id == send_id};
+            var to_remove = _.filter(outbox, send_id);
+            outbox = _.reject(outbox, send_id);
+            updateOutboxUi();
+            return to_remove;
+        };
+        socket.on('newmessage', function(data) {
+            appendMsg([JSON.parse(data)]);
+        });
+        socket.on('delmessage', function(id){
+            deleteMsg([id]);
+        });
+
+        socket.on('authcomplete', function(data) {
+            appendMsg(JSON.parse(data))
+        });
+
+        socket.on('messageok', function(data){
+            removeFromOutbox(JSON.parse(data).send_id);
+        };
+
+        socket.on('messagerejected', function(data){
+            var e = removeFromOutbox(JSON.parse(data).send_id);
+            log("Your message was rejected: " + e.message);
+        };
+        socket.on('errormessage', function(data){
+            log("Your connection was rejected " + data.message);
+        };
+
+        var sendMsg = function(msg){
+            msg.send_id = uuid();
+            msg.send_date = Date.now().toISOString();
+            outbox.push(msg);
+            socket.emit('sendmessage', JSON.stringify(msg);
+        };
         var getmsg = function(){
             return {
                 user_id: config.user_id,
@@ -177,13 +274,16 @@ $.fn.weaverchat = function(settings){
         var send = function(event){
             event.preventDefault();
             if (input.val().length > 0){
-                socket.emit('msg', JSON.stringify(getmsg()));
-                appendMsg(getmsg());
+                sendMsg(getmsg());
                 input.val("");   
             }
         };
         form.on('submit', send);
-        submit.on('click', send)
+        submit.on('click', send);
+
+        //Try to authenticate
+        socket.emit('auth', JSON.stringify({authstring: config.authstring, hmacsha256: config.hmacsha256}));
+
     });
  };
 })(jQuery);
