@@ -23,7 +23,12 @@
     "redis": "~0.10.0",
     "underscore": "~1.5.2",
     "node-uuid": "~1.4.1",
-    "grunt": "~0.4.2"
+    "grunt": "~0.4.2",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-contrib-jshint": "~0.8.0",
+    "grunt-nodemon": "~0.1.2",
+    "grunt-concurrent": "~0.4.2",
+    "grunt-env": "~0.4.1"
   },
   "engines": {
     "node": "0.10.x"
