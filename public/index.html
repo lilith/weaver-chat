@@ -15,11 +15,26 @@
     </div>
         <script src="/socket.io/socket.io.js"></script>
     <script src="/components/jquery/jquery.min.js"></script>
-    <script src="/components/underscore/underscore.min.js"></script>
+    <script src="/components/underscore/underscore-min.js"></script>
     <script src="/weaverchat.js"></script>
     <script type="text/javascript">
     $(function(){
-        $(".weaverchat").weaverchat();
+        var authstring = {
+            user_id: "124",
+            profile_id: "124",
+            profile_display_name: "`4Wizard `1Akorn",
+            room_id: 'testroom',
+            powers: [],
+            mutes: [],
+            readonly:false,
+            signed_on: (new Date()).toISOString()
+        };
+        $(".weaverchat").weaverchat({
+            authstring: JSON.stringify(authstring),
+            hmacsha255: "hashofsecretplus|plusauthstring"
+        });
+
+
     });
     </script>
 </body>

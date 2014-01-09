@@ -57,6 +57,6 @@ io.set('transports', [
 ]);
 
 
-require('chat')(app, io, creatRedisClient);
+require('./chat')(app, io, createRedisClient, redis);
 
 server.listen(process.env.PORT || 80)

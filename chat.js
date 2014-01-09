@@ -4,103 +4,119 @@
  * Module dependencies.
  */
 var express = require('express'),
-    _ = require("underscore"),
-    debug = true, 
-    uuid = require('node-uuid');
+  _ = require('underscore'),
+  debug = true,
+  uuid = require('node-uuid');
 
-module.exports = function(app, io, redisConnect) {
+module.exports = function(app, io, redisConnect, redis) {
 
-var store = redisConnect();
+  var store = redisConnect();
 
-var get_messages = function(key, index, length, resultCallback, errorCallback){
+  var get_messages = function(key, index, length, resultCallback, errorCallback){
     store.lrange([key, index, length], function (err,result){
-        if (result) {
-            result= _.map(result, function(e){return JSON.parse(e);});
-            result = _.reject(result, function(e){ return !e;});
-            resultCallback(result);
-        }else{
-            errorCallback("Failed to query current list of messages");
-            redis.print(err,result);
-        }
+      if (result) {
+        result= _.map(result, function(e){return JSON.parse(e);});
+        result = _.reject(result, function(e){ return !e;});
+        resultCallback(result);
+      }else{
+        errorCallback("Failed to query current list of messages");
+        redis.print(err,result);
+      }
     });
-};
+  };
 
-io.sockets.on('connection', function(client) {
+  io.sockets.on('connection', function(client) {
 
     if (debug)
-        console.log("Connecting: ", client.id);
+      console.log("Connecting: ", client.id);
 
-    var cl = {}; //client info
 
     client.on('auth', function(data){
 
-    	data = JSON.parse(data);
-    	ci.info = JSON.parse(data.authstring);
-    	//TODO: Verify these are present
-    	//ci.info.user_id, ci.info.profile_id, ci.info.profile_display_name, 
-    	//ci.info.room_id
-    	//ci.info.powers
-    	//ci.info.mutes
-    	//ci.info.readonly
-    	//TODO: Verify ci.info.signed_on is within 24 hours.
-    	//TODO: verify data.hmacsha256 matches secret | data.authstring
+    if (debug)
+      
+      data = JSON.parse(data);
+      client.info = JSON.parse(data.authstring);
 
-    	ci.info.messages_key = ci.info.room_id + ":messages";
-    	initdata = {}
-    	client.join(ci.info.room_id);
+      console.log("Authenticating: ", client.id, "as", client.info.user_id, ", ", client.info.profile_display_name);
 
-    	get_messages(ci.info.messages_key, 0,20, function(data){
-			client.emit('authcomplete', JSON.stringify(data));
-    	}, function (error){
-    		client.emit('errormessage', {message: error}))
-    	})
-    	
+      //TODO: Verify these are present
+      //client.info.user_id, client.info.profile_id, client.info.profile_display_name, 
+      //client.info.room_id
+      //client.info.powers
+      //client.info.mutes
+      //client.info.readonly
+      //TODO: Verify client.info.signed_on is within 24 hours.
+      //TODO: verify data.hmacsha256 matches secret | data.authstring
+
+      client.info.messages_key = client.info.room_id + ":messages";
+      
+      client.join(client.info.room_id);
+
+      get_messages(client.info.messages_key, 0,20, function(data){
+        client.emit('authcomplete', JSON.stringify(data));
+        console.log("Authenticated: ", client.info.profile_display_name );
+
+      }, function (error){
+        client.emit('errormessage', JSON.stringify({message: error}));
+      });
+      
     });
 
-	client.on('delmessage', function(msg){
-		//TODO!
-		//Check if they have authorization (ci)
-		//Do a linear search through redis looking for a matching 'id'. 
-		//Find that exact string, and delete with LREM.
-		client.broadcast.emit('delmessage', JSON.parse(msg).id);
-	});
+    client.on('delmessage', function(msg){
+      if (!client.info){
+        //TODO: tell to reauth
+        return;
+      }
+      //TODO!
+      //Check if they have authorization (ci)
+      //Do a linear search through redis looking for a matching 'id'. 
+      //Find that exact string, and delete with LREM.
+      client.broadcast.emit('delmessage', JSON.parse(msg).id);
+    });
 
     client.on('sendmessage', function(msg) {
-		var m = JSON.parse(msg)
-        //Check for banned words
-        //Check for mute
-        //Check for sync
-        //Check for dupe
-        //Check for blank
+      if (!client.info){
+        //TODO: tell to reauth
+        return;
+      }
+      var m = JSON.parse(msg);
+      //Check for banned words
+      //Check for mute
+      //Check for sync
+      //Check for dupe
+      //Check for blank
 
-        console.log("Message: " + msg);
+      console.log("Message: " + msg);
 
-        if (m.message.indexOf("snap") > -1){
-        	client.emit("messagerejected", msg);
-        	return; //we rejected the message, nothing left to do.
-        }
+      if (m.message.indexOf("snap") > -1){
+        console.log("Rejected message: " + msg);
+        client.emit("messagerejected", msg);
+        return; //we rejected the message, nothing left to do.
+      }
 
-        m.date = Date.now().toISOString();
-        m.id = uuid.v1();
-		
-		//Tell the user it was ok.
-		client.emit ('messageok', JSON.stringify(m));
-		//We could delete send_id and send_date now, if we cared...
+      m.date = (new Date()).toISOString();
+      m.id = uuid.v1();
+      
+      client.emit('newmessage', JSON.stringify(m));
+      //Tell the user it was ok.
+      client.emit('messageok', JSON.stringify(m));
+      //We could delete send_id and send_date now, if we cared...
 
-        msg = JSON.stringify(m);
+      msg = JSON.stringify(m);
 
-        //Store message
-        store.lpush(ci.info.messages_key,msg, redis.print); //Push latest message
-        store.ltrim(ci.info.messages_key,0,499, redis.print); //Trim to 500 messages
-        
-        client.broadcast.emit('newmessage', msg)
-    })
+      //Store message
+      store.lpush(client.info.messages_key,msg, redis.print); //Push latest message
+      store.ltrim(client.info.messages_key,0,499, redis.print); //Trim to 500 messages
+      
+      client.broadcast.emit('newmessage', msg);
+
+    });
 
     client.on('disconnect', function() {
+      console.log("Disconnected: ", client.id);
+    });
+  });
 
-        console.log("Disconnected: ", client.id)
-    })
-});
-
-}
+};
 
